@@ -1,0 +1,7 @@
+#!/usr/bin/env hush
+
+create the file blah.txt
+write hello there to the file blah.txt
+rename the file blah.txt to hello.txt
+display the contents of hello.txt
+delete blah.txt

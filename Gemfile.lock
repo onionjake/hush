@@ -1,0 +1,12 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    colorize (0.7.7)
+    wit (1.0.6)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  colorize
+  wit

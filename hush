@@ -1,0 +1,133 @@
+#!/usr/bin/env ruby
+
+#   Copyright 2015 Jacob Willoughby
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+require 'rubygems'
+require 'bundler/setup'
+require 'wit'
+require 'json'
+require 'shellwords'
+require 'colorize'
+
+require 'pp'
+
+# Client access token of wit.ai instance
+ACCESS_TOKEN = '2YUZQX2F4NNXUDQS5IWW4MGV67Z7CDLV'
+
+# Will automatically execute anything above this
+ABSOLUTE_CONFIDENCE = 0.7
+
+# Will prompt for anything above this, but below absolute confidence
+UNSURE_CONFIDENCE = 0.4
+
+Wit.init 
+
+def sh line, confidence, human_text
+  puts "I have #{confidence*100}% confidence that I should #{human_text}.".red
+  case confidence
+  when 0..UNSURE_CONFIDENCE
+    puts "My confidence is so low, I doubt that is even remotely what you wanted.".red
+    return
+  when UNSURE_CONFIDENCE..ABSOLUTE_CONFIDENCE
+    print "Should I execute it? (y/N) ".red if $stdin.tty?
+    if $stdin.tty? && !($stdin.gets.strip =~ /^y/i)
+      puts "I will not execute it, master.".red
+      return
+    end
+  when ABSOLUTE_CONFIDENCE..1.0
+    puts "I am so sure of myself I am just going to execute it. Have a nice day.".red
+  else
+    puts "I didn't really expect my confidence to be #{confidence}, so I am".red
+    puts "just going to do nothing.".red
+    return
+  end
+  system(line)
+  unless $?.success?
+    $stderr.puts "Oh dear, that command appears to have been unsuccessful.".red
+  end
+end
+
+def prompt
+  print "What is your command? ".red
+end
+
+prompt
+ARGF.each_line do |line|
+  line.strip!
+
+
+  if line.empty?
+    next
+  end
+
+  # skip comment characters, this stops processing of the she-bang line
+  if line[0] == '#'
+    next
+  end
+  # Have wit.ai extract the intent
+  puts " + #{line}".green
+  response = JSON.parse(Wit.text_query(line, ACCESS_TOKEN))
+
+  outcomes = response["outcomes"]
+  if outcomes.size == 0
+    puts "I don't think you really intended to do anything with that last statement...".red
+    next
+  end
+
+  # TODO: Do something with multiple outcomes
+  outcome = outcomes.first
+  confidence = outcome["confidence"]
+
+  if outcome["entities"].has_key? "file_name"
+    files = outcome["entities"]["file_name"].map { |e| e["value"] }
+  end
+
+  case outcome["intent"]
+  when "create_file"
+    sh "touch #{files.join(" ")}",
+        confidence,
+        "create the file#{"s" if files.size > 1} #{files.join ", "}" 
+  when "delete_file"
+    sh "rm #{files.join(" ")}", 
+        confidence,
+        "delete the file#{"s" if files.size > 1} #{files.join ", "}" 
+  when "display_file"
+    sh "cat #{files.join(" ")}", 
+        confidence,
+        "display the file#{"s" if files.size > 1} #{files.join ", "}" 
+  when "rename_file"
+    sh "mv #{files.last} #{files.first}", 
+        confidence,
+        "rename the file #{files.last} to #{files.first}" 
+  when "write_file"
+    content = outcome["entities"]["content"].first["value"]
+    sh "echo #{Shellwords.escape(content)} > #{files.first}", 
+        confidence,
+        "write '#{content}' to the file #{files.first}"
+  when "exit_shell"
+    puts "I am #{confidence*100}% sure that you want out of here.".red
+    puts "Goodbye...".red
+    exit
+  when "UNKNOWN"
+    puts "I really have no idea what you intended to do there... and I am only #{confidence*100}% confident of that.".red
+  else
+    puts "I think I know what you intended to do (#{outcome["intent"]}), but I".red
+    puts "haven't really been taught to do that yet.".red
+  end
+
+  prompt
+end
+
+Wit.close
