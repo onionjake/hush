@@ -56,7 +56,29 @@ cd <path_to_hush>/
 bundle install
 ```
 
-### License
+## FAQ
+### How does it work?
+
+`hush` uses https://wit.ai/ to do natural language processing.  Wit.ai returns
+the command's intended action and what entities it should operate on that.
+`hush` then creates a real shell command and executes it.
+
+### Can I add my own commands?
+
+Yes, you can fork my wit.ai instance and train your own commands.  This is my
+instance:
+
+https://wit.ai/onionjake/hush
+
+Pull requests are also welcome!
+
+### Does `hush` only speak English?
+
+Yes.  However, wit.ai supports multiple languages, so it should be
+straightforward to more to `hush`.
+
+
+## License
 
 ```
    Copyright 2015 Jacob Willoughby
