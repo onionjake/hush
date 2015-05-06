@@ -13,9 +13,32 @@ display the contents of hello.txt
 delete hello.txt
 ```
 
-## Installation 
+## Use 
 
-### Pre-reqs
+```bash
+# interactive
+./hush
+# run a script
+./hush <HUSH_SCRIPT>
+# Use she-bang in script (see above): #!/path/to/hush
+chmod +x <HUSH_SCRIPT>
+./<HUSH_SCRIPT>
+```
+
+## What can `hush` do?
+
+Currently `hush` understands the following intended actions:
+
+* Create file
+* Delete file
+* Display file
+* Rename file
+* Write file
+* Exit shell
+* ...
+* `TODO`
+
+## Installation
 
 `hush` requires the following: 
 
