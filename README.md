@@ -15,6 +15,9 @@ delete hello.txt
 
 ## Use 
 
+***Warning: hush is experimental software and may do anything, including
+accidentally executing 'rm -rf /'.  Use at your own risk.***
+
 ```bash
 # interactive
 ./hush
